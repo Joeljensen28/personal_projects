@@ -4,7 +4,7 @@ This is a program that says "Hello world".
 
 This program is testing that my environment is working properly
 
-[Software Demo Video](http://youtube.link.goes.here)
+[Software Demo Video](https://youtu.be/9PQsLo36ldw)
 
 # Development Environment
 
