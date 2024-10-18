@@ -26,8 +26,6 @@ Scraping and wrangling is complete, only things left to complete are as follows:
 
 # Overview #2
 
-# Overview
-
 The goal of this second part of the project was to build a machine learning model that can predict if a member of the Quorum of the 12 will ever become president of the Church of Jesus Christ of Latter-day Saints. I wanted to apply my machine learning skills to real-world data and make real-world predictions on matters that are interesting to me.
 
 The dataset used for this project was one I created on my own by scraping data from Wikipedia, and then wrangling it using R to find the information I need. This dataset can be found in `apostles_clean.csv`. It contained columns pertaining to the birth of each apostle in this dispensation, along with when they were ordained, how many apostles were younger than them, the age of all the other apostles when they were ordained, and other important features.
