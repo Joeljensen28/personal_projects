@@ -125,6 +125,15 @@ final <- useful %>%
   ) %>% 
   ungroup() %>% 
   unnest_wider(age_aps, names_sep = "_")
+  
+  final <- final %>% 
+    mutate(
+    across(
+      8:22,
+      ~ coalesce(., age_ordained)
+    ),
+    num_younger_aps = if_else(!is.na(num_younger_aps), num_younger_aps, round(mean(num_younger_aps, na.rm = TRUE)))
+  )
 
 
 ```
