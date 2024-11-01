@@ -1,0 +1,151 @@
+```{r}
+library(tidyverse)
+library(stringi)
+library(stringr)
+library(lubridate)
+library(forcats)
+```
+
+```{r}
+aps <- read_csv("apostles_uncleansed.csv")
+```
+
+```{r}
+aps <- aps %>% 
+  select(
+    !...1
+  )
+
+non_pres <- c("Oliver Cowdery", "David Whitmer", "Hyrum Smith", "Lyman Wight")
+
+aps <- aps %>% mutate(
+  president = if_else(str_detect(positions, "President of the Church"), "Yes", "No")
+) %>% mutate(
+  president = if_else(name %in% non_pres, "No", president)
+)
+```
+
+```{r}
+aps <- aps %>% 
+  sort_by(aps$name) %>% 
+  distinct(name, .keep_all = TRUE)
+```
+
+```{r}
+### FIND A WAY TO FIGURE OUT WHAT AGE ALL THE OTHER APOSTLES WERE WHEN EACH APOSTLE WAS ORDAINED!!!!!
+
+living <- c("Russell M. Nelson", "Dallin H. Oaks", "Henry B. Eyring", "Jeffrey R. Holland", "Dieter F. Uchtdorf", "David A. Bednar", "Quentin L. Cook", "D. Todd Christofferson", "Neil L. Andersen", "Ronald A. Rasband", "Gary E. Stevenson", "Dale G. Renlund", "Gerrit W. Gong", "Ulisses Soares", "Patrick Kearon")
+
+useful <- aps %>% 
+  mutate(
+    birthdate = ymd(str_extract(birthdate, "\\d{4}-\\d{2}-\\d{2}")),
+    positions = str_extract(positions, "Quorum of the Twelve Apostles, called by.*") %>% coalesce(str_extract(positions, "Quorum of the Twelve Apostles,.*")),
+    date_ordained = ymd(str_extract(positions, "\\d{4}-\\d{2}-\\d{2}")),
+  ) %>% 
+  mutate(
+    positions = str_extract(positions, "\\).*"),
+    date_left = if_else(name %in% living, Sys.Date(), ymd(str_extract(positions, "\\d{4}-\\d{2}-\\d{2}"))
+      )
+  )
+
+boyes <- useful %>% 
+  filter(
+    is.na(date_ordained)
+  )
+
+missing <- c(ymd('1829 June 1'), mdy('January 24, 1841 '), mdy("October 11, 1934"), mdy("April 7, 1854"), mdy("February 4, 1864"), mdy("April 6, 1830"), mdy("January 1, 1837"), mdy("April 6, 1830"))
+
+boyes <- boyes %>% 
+  mutate(
+    date_ordained = missing
+  )
+
+others <- useful %>% 
+  filter(
+    !is.na(date_ordained)
+  )
+
+fixed <- boyes %>% 
+  bind_rows(others)
+
+useful <- fixed %>% 
+  mutate(
+    age_ordained = year(date_ordained) - year(birthdate),
+    age_left = year(date_left) - year(birthdate)
+  ) %>% 
+  select(
+    name,
+    birthdate,
+    date_ordained,
+    date_left,
+    age_ordained,
+    age_left,
+    president
+  )
+```
+
+```{r}
+useful
+
+find_ages <- function(current_apostle, all_apostles) {
+  
+  other_apostles <- all_apostles %>% 
+  filter(
+    name != current_apostle$name,
+    date_ordained <= current_apostle$date_ordained,
+    date_left >= current_apostle$date_ordained
+  ) %>% 
+  arrange(date_ordained) %>% 
+  filter(
+    !is.na(name)
+  ) %>% 
+  tail(14)
+  
+  other_ages <- other_apostles %>% 
+    mutate(
+      age_at_ordination = as.integer((current_apostle$date_ordained - birthdate) / dyears(1))
+    ) %>% 
+    pull(age_at_ordination)
+  
+  other_ages <- c(other_ages, rep(mean(other_ages), 14 - length(other_ages)))
+  
+  return(other_ages)
+}
+```
+
+```{r}
+final <- useful %>% 
+  rowwise() %>% 
+  mutate(
+    age_aps = list(find_ages(pick(c(name, date_ordained)), useful))
+  ) %>% 
+  mutate(
+    min_other_aps = min(age_aps),
+    num_younger_aps = sum(age_aps < age_ordained)
+  ) %>% 
+  ungroup() %>% 
+  unnest_wider(age_aps, names_sep = "_")
+  
+  final <- final %>% 
+    mutate(
+    across(
+      8:22,
+      ~ coalesce(., age_ordained)
+    ),
+    num_younger_aps = if_else(!is.na(num_younger_aps), num_younger_aps, round(mean(num_younger_aps, na.rm = TRUE)))
+  )
+
+
+```
+
+```{r}
+final <- final %>% 
+  mutate(
+    birth_year = year(birthdate)
+  )
+```
+
+```{r}
+write.csv(final, "apostles_clean.csv", row.names = FALSE)
+```
+
