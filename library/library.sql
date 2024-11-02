@@ -1,6 +1,6 @@
 USE library;
 
-INSERT INTO authors (author_id, fname, lname, born, died)
+INSERT INTO authors (author_id, fname, lname, born, died) -- Populate authors table
 VALUES
     (DEFAULT, 'Ray', 'Bradbury', STR_TO_DATE('08/22/1920', '%m/%d/%Y'), STR_TO_DATE('06/05/2012', '%m/%d/%Y')),
     (DEFAULT, 'George', 'Miller', STR_TO_DATE('09/16/1993', '%m/%d/%Y'), NULL),
@@ -24,9 +24,9 @@ VALUES
 SELECT * FROM authors;
 
 ALTER TABLE books
-MODIFY COLUMN title VARCHAR(70);
+MODIFY COLUMN title VARCHAR(70); -- Fix column in order to allow for longer book titles
     
-INSERT INTO books (book_id, title, year_published, author_id, `read`)
+INSERT INTO books (book_id, title, year_published, author_id, `read`) -- Populate books table
 VALUES
 	(DEFAULT, 'Dune', 1965, 1, 'y'),
     (DEFAULT, 'Dune Messiah', 1969, 1, 'y'),
@@ -58,7 +58,7 @@ VALUES
     (DEFAULT, 'The Hobbit', 1937, 15, 'n'),
     (DEFAULT, 'The Complete Fiction of H.P. Lovecraft', 2014, 16, 'y');
     
-    INSERT INTO genres (genre_id, genre)
+    INSERT INTO genres (genre_id, genre) -- Populated genres
     VALUES
 		(DEFAULT, 'Sci-fi'),
         (DEFAULT, 'Dystopian'),
@@ -72,7 +72,7 @@ VALUES
         (DEFAULT, 'Historical Fiction'),
         (DEFAULT, 'Realistic Fiction');
     
-INSERT INTO book_has_genre (books_id, genre_id)
+INSERT INTO book_has_genre (books_id, genre_id) -- Establish many to many relationship
 VALUES
 	(30, 1),
     (31, 1),
@@ -137,10 +137,10 @@ SELECT ROUND(AVG(year_published)) AS avg_year
 FROM books;
 
 -- What genre have I read the most of?
-SELECT g.genre, COUNT(b.book_id) AS book_count
+SELECT g.genre, COUNT(b.book_id) AS book_count -- Ultimate result should onyl be two columns
 FROM genres g
-JOIN book_has_genre bhg ON g.genre_id = bhg.genre_id
+JOIN book_has_genre bhg ON g.genre_id = bhg.genre_id -- Join tables
 JOIN books b ON bhg.books_id = b.book_id
-WHERE b.`read` = "y"
+WHERE b.`read` = "y" -- Make sure it's only books I've read
 GROUP BY g.genre
-ORDER BY book_count DESC;
+ORDER BY book_count DESC; -- Group the retuls by the new book_count column
