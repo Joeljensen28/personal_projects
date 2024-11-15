@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "KlVFCYFRKVe+gtoSY/raC/aHof1PkkPSXZzIoFxnzyU5yXBL5pAhTYswjW/PTwAHJvVdt7u93rCjgr1oB3pPZA==",
+  "success": true,
+  "projectFilePath": "/Users/joeljensen28/Documents/School/applied_programming/ScrabbleSolver/ScrabbleSolver.csproj",
+  "expectedPackageFiles": [
+    "/Users/joeljensen28/.nuget/packages/csvhelper/33.0.1/csvhelper.33.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
