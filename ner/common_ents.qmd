@@ -1,0 +1,148 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(stringr)
+library(stringr)
+library(ggrepel)
+```
+
+```{r}
+dat <- read_csv('data/ent_mentions.csv')
+```
+
+```{r}
+merge_ents <- function(data, entity_name) {
+  matching_ents <- data %>% 
+    filter(
+      str_detect(
+        entity,
+        regex(entity_name, ignore_case = TRUE)
+      )
+    )
+  
+  chapter_cols <- names(data)[!names(data) %in% "entity"]
+  
+  merged <- matching_ents %>% 
+    select(all_of(chapter_cols)) %>% 
+    summarize(
+      across(
+        everything(), sum, na.rm = TRUE
+      )
+    ) %>% 
+    mutate(
+      entity = str_split(entity_name, "\\|")[[1]][1]
+    ) %>%
+    select(entity, everything())
+  
+  data_remaining <- data %>% 
+    filter(!str_detect(entity, regex(entity_name, ignore_case = TRUE)))
+  
+  data_new <- bind_rows(data_remaining, merged)
+  
+  return(data_new)
+}
+
+fix_dupes <- function(dataset, regex_string) {
+  new_dataset <- dataset %>% 
+  mutate(
+    entity = if_else(
+      str_detect(
+        str_replace_all(entity, "\\s", ""), 
+        regex(regex_string, ignore_case = TRUE)
+      ), 
+      str_replace_all(entity, "\\s", ""),
+      entity
+    )
+  ) %>% 
+  merge_ents(regex_string)
+  
+  return(new_dataset)
+}
+
+merged <- dat %>% 
+  fix_dupes("Paul|Muad'Dib|Usul|KwisatzHaderach|Kwisatz|Haderach|Mahdi|LisanAl-Gaib|Lisan|Al-Gaib") %>% 
+  fix_dupes("Jessica|LadyJessica|Jess|Jessi|LadyJe") %>% 
+  fix_dupes("Dune|Arrakis|Desert Planet") %>% 
+  fix_dupes("Baron|Vladimir") %>% 
+  fix_dupes("Duncan|Idaho|Dunc") %>% 
+  fix_dupes("Thufir|Hawat") %>% 
+  fix_dupes("BeneGesserit|Bene G|Gesserit") %>% 
+  fix_dupes("SpacingGuild|Spacing|Guild") %>% 
+  fix_dupes("Feyd-Rautha|Feyd|Rautha|Feyd-Rau-") %>% 
+  fix_dupes("sandworm|Shai-hulud|Shai|Hulud|Maker") %>% 
+  fix_dupes("LietKynes|Liet|Kynes") %>% 
+  fix_dupes("Piter") %>% 
+  fix_dupes("Fremen") %>% 
+  fix_dupes("Stilgar") %>% 
+  fix_dupes("Landsraad") %>% 
+  fix_dupes("Chani") %>% 
+  fix_dupes("Rabban") %>% 
+  fix_dupes("Margot Fenring|Lady Margot|Margot|Fenring") %>% 
+  fix_dupes("Shaddam") %>% 
+  fix_dupes("Harkonnen") %>% 
+  fix_dupes("Atreides") %>% 
+  fix_dupes("Leto") %>% 
+  fix_dupes("Yueh")
+```
+
+
+```{r}
+long <- merged %>% 
+  pivot_longer(
+    cols = -entity,
+    names_to = "chapter",
+    values_to = "mentions"
+  ) 
+
+long %>% 
+  group_by(entity) %>% 
+  summarize(
+    total_m = sum(mentions)
+  ) %>% 
+  arrange(desc(total_m))
+
+cum <- long %>% 
+  group_by(entity) %>% 
+  mutate(
+    cumulative = cumsum(mentions)
+  ) %>% 
+  ungroup()
+
+fil <- cum %>% 
+  filter(
+    entity %in% c("Paul", "Jessica", "Baron", "Thufir", "Stilgar")
+  ) %>% 
+  mutate(
+    chapter = factor(chapter, levels = unique(chapter), ordered = TRUE)
+  )
+
+num <- fil %>%
+  mutate(chapter_num = as.numeric(str_extract(chapter, "\\d+"))) %>%
+  arrange(chapter_num) %>%
+  mutate(chapter = factor(chapter, levels = unique(chapter), ordered = TRUE))
+
+  
+```
+
+```{r}
+ggplot(num, aes(x = chapter_num, y = cumulative, color = entity)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal() +
+  labs(
+    x = "Chapter",
+    y = "Cumulative Mentions",
+    title = "Who Are the Most Important Characters in Dune?",
+    color = ""
+  ) +
+  scale_color_brewer(palette = "Set1") +
+  theme(
+    axis.line.x = element_line(linewidth = .1),
+    axis.line.y = element_line(linewidth = .1),
+    title = element_text(face = "bold")
+  ) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0,0.05))
+  )
+```
+
